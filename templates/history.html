@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction History</title>
+    <style>
+        body {
+            background-image: url('/static/myproject.jpg');
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            color: white;
+        }
+        table, th, td {
+            border: 1px solid white;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        button {
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .delete-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Prediction History</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Temperature (°C)</th>
+                    <th>Humidity (%)</th>
+                    <th>Rainfall (mm)</th>
+                    <th>Wind Speed (km/h)</th>
+                    <th>Crop Suitability</th>
+                    <th>Accuracy (%)</th>
+                    <th>Timestamp</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="historyTable">
+                {% for prediction in predictions %}
+                <tr id="row-{{ prediction[0] }}">
+                    <td>{{ prediction[0] }}</td>
+                    <td>{{ prediction[1] }}</td>
+                    <td>{{ prediction[2] }}</td>
+                    <td>{{ prediction[3] }}</td>
+                    <td>{{ prediction[4] }}</td>
+                    <td>{{ prediction[5] }}</td>
+                    <td>{{ prediction[6] }}</td>
+                    <td>{{ prediction[7] }}</td>
+                    <td>
+                        <button class="delete-btn" onclick="deletePrediction({{ prediction[0] }})">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button onclick="location.href='/dashboard'">Back to Dashboard</button>
+    </div>
+
+    <script>
+        async function deletePrediction(predictionId) {
+            const confirmDelete = confirm("Are you sure you want to delete this prediction?");
+            if (!confirmDelete) return;
+
+            try {
+                const response = await fetch(`/delete_prediction/${predictionId}`, {
+                    method: 'POST',
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    // Remove the row from the table
+                    const row = document.getElementById(`row-${predictionId}`);
+                    if (row) row.remove();
+                    alert("Prediction deleted successfully!");
+                } else {
+                    alert("Error deleting prediction: " + (result.error || "Unknown error"));
+                }
+            } catch (error) {
+                console.error("Error deleting prediction:", error);
+                alert("Error deleting prediction.");
+            }
+        }
+    </script>
+</body>
+</html>

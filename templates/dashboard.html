@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <style>
+        body {
+            background-image: url('/static/myproject.jpg');
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            width: 50%;
+        }
+        input {
+            display: block;
+            margin: 10px auto;
+            padding: 10px;
+            width: 80%;
+        }
+        button {
+            margin: 10px auto;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            color: lightgreen;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Dashboard</h1>
+
+        <!-- Form to display IoT data -->
+        <form id="iotForm">
+            <label for="temperature">Temperature (°C):</label>
+            <input type="number" id="temperature" name="temperature" readonly>
+
+            <label for="humidity">Humidity (%):</label>
+            <input type="number" id="humidity" name="humidity" readonly>
+
+            <label for="rainfall">Rainfall (mm):</label>
+            <input type="number" id="rainfall" name="rainfall" readonly>
+
+            <label for="wind_speed">Wind Speed (km/h):</label>
+            <input type="number" id="wind_speed" name="wind_speed" readonly>
+        </form>
+
+        <!-- Buttons for refreshing data and predicting -->
+        <button id="refreshButton">Refresh Data</button>
+        <button id="predictButton">Predict Crop Suitability</button>
+
+        <!-- Section to display prediction results -->
+        <div id="result"></div>
+
+        <button onclick="location.href='/history'">View Prediction History</button>
+        <button onclick="location.href='/logout'">Logout</button>
+    </div>
+
+    <script>
+        // Function to fetch data from ThingSpeak and update the form
+        async function refreshData() {
+            try {
+                const response = await fetch('/update');
+                const data = await response.json();
+
+                if (data.error) {
+                    document.getElementById('result').innerText = 'Error refreshing data: ' + data.error;
+                } else {
+                    document.getElementById('temperature').value = data.temperature;
+                    document.getElementById('humidity').value = data.humidity;
+                    document.getElementById('rainfall').value = data.rainfall;
+                    document.getElementById('wind_speed').value = data.wind_speed;
+
+                    document.getElementById('result').innerText = 'Data refreshed successfully!';
+                }
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+                document.getElementById('result').innerText = 'Error refreshing data.';
+            }
+        }
+
+        // Function to send prediction request to the server
+        async function predictData() {
+            try {
+                const formData = {
+                    temperature: document.getElementById('temperature').value,
+                    humidity: document.getElementById('humidity').value,
+                    rainfall: document.getElementById('rainfall').value,
+                    wind_speed: document.getElementById('wind_speed').value
+                };
+
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.crop_suitability) {
+                    document.getElementById('result').innerText =
+                        `Prediction: ${result.crop_suitability}, Accuracy: ${result.accuracy}% (at ${result.timestamp})`;
+                } else {
+                    document.getElementById('result').innerText =
+                        'Error: ' + (result.error || 'Unknown error occurred.');
+                }
+            } catch (error) {
+                console.error('Error during prediction:', error);
+                document.getElementById('result').innerText = 'Error making prediction.';
+            }
+        }
+
+        // Attach event listeners to buttons
+        document.getElementById('refreshButton').addEventListener('click', refreshData);
+        document.getElementById('predictButton').addEventListener('click', predictData);
+    </script>
+</body>
+</html>

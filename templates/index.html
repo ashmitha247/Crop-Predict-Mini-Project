@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop Suitability Prediction</title>
+</head>
+<body>
+    <h1>Crop Suitability Prediction</h1>
+    <form id="predictionForm">
+        <label for="temperature">Temperature (°C):</label>
+        <input type="number" id="temperature" name="temperature" required><br>
+
+        <label for="humidity">Humidity (%):</label>
+        <input type="number" id="humidity" name="humidity" required><br>
+
+        <label for="rainfall">Rainfall (mm):</label>
+        <input type="number" id="rainfall" name="rainfall" required><br>
+
+        <label for="wind_speed">Wind Speed (km/h):</label>
+        <input type="number" id="wind_speed" name="wind_speed" required><br>
+
+        <button type="submit">Predict Crop Suitability</button>
+    </form>
+
+    <h2>Prediction Result</h2>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const data = {
+                temperature: formData.get('temperature'),
+                humidity: formData.get('humidity'),
+                rainfall: formData.get('rainfall'),
+                wind_speed: formData.get('wind_speed')
+            };
+
+            const response = await fetch('/predict', {
+                method: 'POST',
+                body: new URLSearchParams(data),
+            });
+
+            const result = await response.json();
+            document.getElementById('result').innerText = 'Crop Suitability: ' + result.crop_suitability;
+        });
+    </script>
+</body>
+</html>
